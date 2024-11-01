@@ -20,6 +20,13 @@ class Game:
         while running:
 
             for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONUP:
+                    self.handleClick()
                 if event.type == pygame.QUIT:
                     running = False
             pygame.display.flip()
+    
+    def handleClick(self):
+        pos = pygame.mouse.get_pos()
+        x, y = pos
+        self.board.placePieceUsingPosition(x, y)

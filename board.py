@@ -1,3 +1,4 @@
+import math
 import pygame;
 
 """
@@ -9,15 +10,17 @@ white = (255, 255, 255)
 
 class Board: 
 
-    # maps indexes to postions on the board
-    positionMap = {}
+    # maps indexes to circle (pieces) postions on the board
+    positionMapForPieces = {}
+    # maps indexes to rect positions the value is (topLeft(x, y), bottomRight(x, y)) uses tuple of tuples as value ((x, y), (x, y))
+    positionMapForHighlighting = {}
 
     def __init__(self, boardWidth, boardHeight, color):
 
         pygame.display.set_mode ([boardWidth, boardHeight])
 
         # setup of game display and grid
-        self.setupPositionMap()
+        self.setupMaps()
         self.boardWidth = boardWidth
         self.boardHeight = boardHeight
         self.screen = pygame.display.get_surface()
@@ -76,10 +79,10 @@ class Board:
             verticalLinePos.x += 55
 
     def drawStartingPieces(self):
-        self.drawPiece(3, 3, "black")
-        self.drawPiece(3, 4, "white")
-        self.drawPiece(4, 3, "white")
         self.drawPiece(4, 4, "black")
+        self.drawPiece(4, 5, "white")
+        self.drawPiece(5, 4, "white")
+        self.drawPiece(5, 5, "black")
 
     def initalizeGrid(self):
         # initalize as -1 to represent null
@@ -89,27 +92,27 @@ class Board:
                 row.append(-1)
             self.grid.append(row)
 
-    def drawPiece(self, x, y, colorString):
+    def drawPiece(self, xIndex, yIndex, colorString):
         # Error checking
-        if (x < 1 or x > 8 or y < 1 or y > 8):
+        if (xIndex < 1 or xIndex > 8 or yIndex < 1 or yIndex > 8):
             print("You idiot these are out of bounds!!!")
         
         # add the circle
-        if (self.grid[x][y] != -1):
+        if (self.grid[xIndex][yIndex] != -1):
             return
         
         # add either 0 "for white" or 1 "for black"
         white = (255, 255, 255)
         black = (0, 0, 0)
         radius = 25
-        position = self.positionMap[x, y]
+        position = self.positionMapForPieces[xIndex, yIndex]
 
         if (colorString.lower() == "white"):
-            self.grid[x][y] = 0
+            self.grid[xIndex][yIndex] = 0
             pygame.draw.circle(self.screen, white, position, radius)
             pygame.display.flip()
         elif (colorString.lower() == "black"):
-            self.grid[x][y] = 1
+            self.grid[xIndex][yIndex] = 1
             pygame.draw.circle(self.screen, black, position, radius)
             pygame.display.flip()
         else:
@@ -137,16 +140,33 @@ class Board:
         
         pygame.display.update()
 
-    def setupPositionMap(self):
+    def setupMaps(self):
         # map indeces in the board to the corresponding positions
+
         curXPosition = 25
         curYPosition = 80 
         
         # loop over and fill the map
         for i in range(8):
             for (j) in range(8):
-                self.positionMap[j, i] = [curXPosition, curYPosition]
+                # these represent the bounds of the square at that location on the board
+                topLeft = (curXPosition - 25, curYPosition - 25)
+                bottomRight = (curXPosition + 25, curYPosition + 25)
+
+                self.positionMapForPieces[j + 1, i + 1] = [curXPosition, curYPosition]
+                self.positionMapForHighlighting[j + 1, i + 1] = [topLeft, bottomRight]
                 curXPosition += 55
+
             curXPosition = 25
             curYPosition += 55
+    
+    def placePieceUsingPosition(self, x, y):
+
+        # get the corect indexs using math
+        xIndex = math.floor(x / 55) + 1
+        yIndex = math.floor(y / 55)
+        self.drawPiece(xIndex, yIndex, "black")
+
+    
+
 

@@ -6,5 +6,4 @@ def main():
     pygame.font.init()
     game = Game()
     game.startGame()
-
 main()
