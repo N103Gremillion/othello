@@ -26,6 +26,7 @@ class Board:
         self.boardWidth = boardWidth
         self.boardHeight = boardHeight
         self.screen = pygame.display.get_surface()
+        # this is a 2d array
         self.grid = []
         self.playerScoreFont = pygame.font.SysFont('Comic Sans MS', 30)
         self.currentTurnFont = pygame.font.SysFont('Comit Sans MS', 45)
@@ -49,7 +50,7 @@ class Board:
         horizontalLineWidth = 435
         horizontalLineHeight = 5
         verticalLineWidth = 5
-        verticalLineHeight = 435
+        verticalLineHeight = 440
 
         # draw divider line that divides header from board
         self.screen.fill(color)
@@ -88,9 +89,9 @@ class Board:
 
     def initalizeGrid(self):
         # initalize as -1 to represent null
-        for i in range(64):
+        for i in range(8):
             row = []
-            for j in range(64):
+            for j in range(8):
                 row.append(-1)
             self.grid.append(row)
 
@@ -100,7 +101,7 @@ class Board:
             print("You idiot these are out of bounds!!!")
         
         # add the circle
-        if (self.grid[xIndex][yIndex] != -1):
+        if (self.grid[xIndex - 1][yIndex - 1] != -1):
             return
         
         # add either 0 "for white" or 1 "for black"
@@ -110,11 +111,11 @@ class Board:
         position = self.positionMapForPieces[xIndex, yIndex]
 
         if (colorString.lower() == "white"):
-            self.grid[xIndex][yIndex] = 0
+            self.grid[xIndex - 1][yIndex - 1] = 0
             pygame.draw.circle(self.screen, white, position, radius)
             pygame.display.flip()
         elif (colorString.lower() == "black"):
-            self.grid[xIndex][yIndex] = 1
+            self.grid[xIndex - 1][yIndex - 1] = 1
             pygame.draw.circle(self.screen, black, position, radius)
             pygame.display.flip()
         else:
@@ -162,13 +163,33 @@ class Board:
             curXPosition = 25
             curYPosition += 55
     
-    def placePieceUsingPosition(self, x, y):
+    def placePieceUsingPosition(self, x, y, playerNumber):
 
         # get the corect indexs using math
         xIndex = math.floor(x / 55) + 1
         yIndex = math.floor(y / 55)
-        self.drawPiece(xIndex, yIndex, "black")
 
+        if xIndex < 1 or xIndex > 8 or yIndex < 1 or yIndex > 8:
+            return False
+
+        if playerNumber == 1:
+            self.drawPiece(xIndex, yIndex, "black")
+            return True
+    
+        elif playerNumber == 2:
+            self.drawPiece(xIndex, yIndex, "white")
+            return True
+
+        # when a position is not valid
+        else:
+            return False
+        
+    def printGrid(self):
+
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[0])):
+                print(self.grid[i][j], end='')
+            print("")
     
 
 
