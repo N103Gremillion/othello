@@ -5,8 +5,10 @@ import pygame;
 Note: for this class a 0 on the grid is white & 1 is black and a -1 is (empty)
 """
 
+# rgb colors
 black = (0, 0, 0)
 white = (255, 255, 255)
+blue = (0, 0, 139)
 
 class Board: 
 
@@ -52,7 +54,7 @@ class Board:
         # draw divider line that divides header from board
         self.screen.fill(color)
         dividerLine = pygame.Rect(dividerLinePos.x, dividerLinePos.y, horizontalLineWidth, horizontalLineHeight)
-        pygame.draw.rect(self.screen, black, dividerLine)
+        pygame.draw.rect(self.screen, blue, dividerLine)
         pygame.display.update()
 
         # draw player scores
@@ -70,8 +72,8 @@ class Board:
 
             curHorizontalLine = pygame.Rect(horizontalX, horizontalY, horizontalLineWidth, horizontalLineHeight)
             curVerticalLine = pygame.Rect(verticalX, verticalY, verticalLineWidth, verticalLineHeight)
-            pygame.draw.rect(self.screen, black, curHorizontalLine)
-            pygame.draw.rect(self.screen, black, curVerticalLine)
+            pygame.draw.rect(self.screen, blue, curHorizontalLine)
+            pygame.draw.rect(self.screen, blue, curVerticalLine)
             pygame.display.update()
 
             # update line positions
