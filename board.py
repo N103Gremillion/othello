@@ -1,7 +1,7 @@
 import pygame;
 
 """
-Note: for this class a 0 on the grid is white & 1 is black
+Note: for this class a 0 on the grid is white & 1 is black and a -1 is (empty)
 """
 class Board: 
 
@@ -10,21 +10,31 @@ class Board:
 
     def __init__(self, boardWidth, boardHeight, color):
 
-        self.setupPositionMap()
         pygame.display.set_mode ([boardWidth, boardHeight])
+
+        # setup of game display and grid
+        self.setupPositionMap()
         self.boardWidth = boardWidth
         self.boardHeight = boardHeight
         self.screen = pygame.display.get_surface()
         self.grid = []
+        self.playerScoreFont = pygame.font.SysFont('Comic Sans MS', 30)
+        self.currentTurnFont = pygame.font.SysFont('Comit Sans MS', 45)
+        self.player1text = self.playerScoreFont.render("Player 1: 0", False, (0, 0, 0))
+        self.player2text = self.playerScoreFont.render("Player 2: 0", False, (255, 255, 255))
+        self.currentTurnText = self.currentTurnFont.render("Player 1's Turn", False, (0, 0, 0))
         self.drawBoard(color)
         self.initalizeGrid()
+        self.drawStartingPieces()
+
         pygame.display.flip()
 
     def drawBoard(self, color):
         
         # setup inital values for lines
-        horizontalLinePos = pygame.Vector2(0, 50)
-        verticalLinePos = pygame.Vector2(50, 0)
+        dividerLinePos = pygame.Vector2(0, 50)
+        horizontalLinePos = pygame.Vector2(0, 105)
+        verticalLinePos = pygame.Vector2(50, 50)
 
         # setup temporary constants
         horizontalLineWidth = 435
@@ -33,7 +43,17 @@ class Board:
         verticalLineHeight = 435
         black = (0, 0, 0)
 
+        # draw divider line that divides header from board
         self.screen.fill(color)
+        dividerLine = pygame.Rect(dividerLinePos.x, dividerLinePos.y, horizontalLineWidth, horizontalLineHeight)
+        pygame.draw.rect(self.screen, black, dividerLine)
+        pygame.display.update()
+
+        # draw player scores
+        self.screen.blit(self.player1text, (0, 0))
+        self.screen.blit(self.player2text, (0, 25))
+        self.screen.blit(self.currentTurnText, (160, 10))
+
         # loop over and draw the initial vertical and horizontal lines on the board
         for i in range(7):
 
@@ -52,6 +72,12 @@ class Board:
             horizontalLinePos.y += 55
             verticalLinePos.x += 55
 
+    def drawStartingPieces(self):
+        self.drawPiece(3, 3, "black")
+        self.drawPiece(3, 4, "white")
+        self.drawPiece(4, 3, "white")
+        self.drawPiece(4, 4, "black")
+
     def initalizeGrid(self):
         # initalize as -1 to represent null
         for i in range(64):
@@ -60,7 +86,7 @@ class Board:
                 row.append(-1)
             self.grid.append(row)
 
-    def placePiece(self, x, y, colorString):
+    def drawPiece(self, x, y, colorString):
         # Error checking
         if (x < 1 or x > 8 or y < 1 or y > 8):
             print("You idiot these are out of bounds!!!")
@@ -89,7 +115,7 @@ class Board:
     def setupPositionMap(self):
         # map indeces in the board to the corresponding positions
         curXPosition = 25
-        curYPosition = 25 
+        curYPosition = 80 
         
         # loop over and fill the map
         for i in range(8):
