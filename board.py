@@ -3,6 +3,10 @@ import pygame;
 """
 Note: for this class a 0 on the grid is white & 1 is black and a -1 is (empty)
 """
+
+black = (0, 0, 0)
+white = (255, 255, 255)
+
 class Board: 
 
     # maps indexes to postions on the board
@@ -20,9 +24,9 @@ class Board:
         self.grid = []
         self.playerScoreFont = pygame.font.SysFont('Comic Sans MS', 30)
         self.currentTurnFont = pygame.font.SysFont('Comit Sans MS', 45)
-        self.player1text = self.playerScoreFont.render("Player 1: 0", False, (0, 0, 0))
-        self.player2text = self.playerScoreFont.render("Player 2: 0", False, (255, 255, 255))
-        self.currentTurnText = self.currentTurnFont.render("Player 1's Turn", False, (0, 0, 0))
+        self.player1text = self.playerScoreFont.render("Player 1: 0", False, black)
+        self.player2text = self.playerScoreFont.render("Player 2: 0", False, white)
+        self.currentTurnText = self.currentTurnFont.render("Player 1's Turn", False, black)
         self.drawBoard(color)
         self.initalizeGrid()
         self.drawStartingPieces()
@@ -41,7 +45,6 @@ class Board:
         horizontalLineHeight = 5
         verticalLineWidth = 5
         verticalLineHeight = 435
-        black = (0, 0, 0)
 
         # draw divider line that divides header from board
         self.screen.fill(color)
@@ -111,6 +114,28 @@ class Board:
             pygame.display.flip()
         else:
             print("Not a valid color dummy!!")
+
+    def updateScoreText(self, player, score):
+        
+        if player.lower() == "player1":
+            self.player1text = self.playerScoreFont.render(f"Player 1: {score}", False, black)
+            self.screen.blit(self.player1text, (0, 0))
+        elif player.lower() == "player2":
+            self.player2text = self.playerScoreFont.render(f"Player 2: {score}", False, white)
+            self.screen.blit(self.player2text, (0, 25))
+        
+        pygame.display.update()
+        
+    def updateCurrentTurnText(self, player):
+
+        if player.lower() == "player1":
+            self.currentTurnText = self.currentTurnFont.render(f"Player 1's Turn", False, black)
+            self.screen.blit(self.currentTurnFont, (160, 10))
+        elif player.lower() == "player2":
+            self.currentTurnText = self.currentTurnFont.render(f"Player 2's Turn", False, white)
+            self.screen.blit(self.currentTurnFont, (160, 10))
+        
+        pygame.display.update()
 
     def setupPositionMap(self):
         # map indeces in the board to the corresponding positions
