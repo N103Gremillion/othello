@@ -313,7 +313,7 @@ class Board:
     
     def renderNewScores(self, player1Score, player2Score):
 
-        self.screen.fill(grey, (0, 0, 100, 50))
+        self.screen.fill(grey, (0, 0, 150, 50))
         self.player1text = self.playerScoreFont.render(f"Player 1: {player1Score}", False, black)
         self.player2text = self.playerScoreFont.render(f"Player 2: {player2Score}", False, white)
 
