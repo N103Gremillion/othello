@@ -227,67 +227,54 @@ class Board:
         
         return indexPosition
     
-    def updateGrid(self, color, xIndex, yIndex):
+    def updateGrid(self, colorNum, xIndex, yIndex):
         # Define piece identifiers
         white = 2
         black = 1
+        gridX = xIndex - 1
+        gridY = yIndex - 1
 
-        print("Trying to fill sandwiched lines")
-        print(f"Starting at row / col: ({yIndex}, {xIndex}) with color: {color}")
-
-        # Determine the color values based on the input
-        if color == "black":
-            numToFill = white   # The opposite color to fill
-            fillingWith = black  # The color we're placing
+        if colorNum == black:
+            colorFilling = white
         else:
-            numToFill = black
-            fillingWith = white
+            colorFilling = black
 
-        # Define the direction vectors for row, col movements
-        directions = [(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
-        
-        # Loop through each direction to check for sandwiches
-        for dy, dx in directions:
-            newRow = yIndex + dy  # Starting row index
-            newCol = xIndex + dx  # Starting column index
-            indexesToSwitch = []
-            
-            print(f"Checking row / col: ({newRow}, {newCol}) in direction ({dy}, {dx})")
+        # Test one of the directions
+        directions = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
 
-            # Continue checking until we hit a boundary
-            while 0 <= newRow < len(self.grid) and 0 <= newCol < len(self.grid[0]):
-                if self.grid[newRow - 1][newCol - 1] == numToFill:
-                    indexesToSwitch.append((newRow, newCol))  # Store position of fillers
-                    print(f"Hit {numToFill} piece at ({newRow}, {newCol})")
-                elif self.grid[newRow - 1][newCol - 1] == fillingWith:
-                    # Confirm a valid sandwich only if we found fillers
-                    print(f"Hit {fillingWith}")
-                    if indexesToSwitch:
-                        print(f"Found line to switch in direction ({dy}, {dx}): {indexesToSwitch}")
-                        self.updateGridValues(indexesToSwitch, fillingWith)  # Update the grid
-                    else:
-                        print(f"Found {fillingWith} without any fillers; not a valid sandwich.")
-                    break  # Exit after finding a sandwich or stopping condition
+        for dx, dy in directions: 
+            newX = xIndex + dx
+            newY = yIndex + dy
+            newGridX = gridX + dx
+            newGridY = gridY + dy
+            gridPositionsToFill = []
+
+            # Only proceed if initial position is within bounds
+            while (1 <= newX <= 8 and 1 <= newY <= 8):
+                # Check bounds for newGridX and newGridY before accessing grid
+                if not (0 <= newGridX < len(self.grid) and 0 <= newGridY < len(self.grid[0])):
+                    break  
+                
+                gridVal = self.grid[newGridX][newGridY]
+
+                if gridVal == colorFilling:
+                    gridPositionsToFill.append((newGridX, newGridY))
+                elif gridVal == colorNum and len(gridPositionsToFill) > 0:
+                    self.updateGridValues(gridPositionsToFill, colorNum)
+                    break
                 else:
-                    # Hit an empty cell or a different color
-                    print(f"Stopping search in direction at ({newRow}, {newCol}) - not a valid sandwich. Hit Empty Square")
                     break
 
-                # Move to the next position in the current direction
-                newRow += dy
-                newCol += dx
+                # Move to the next position in the direction
+                newX += dx
+                newY += dy
+                newGridX += dx
+                newGridY += dy
 
-            # Debug: Print indexes to switch after each direction check
-            print(f"Indexes to switch in direction ({dy}, {dx}): {indexesToSwitch}")
-
-
-
-
-                
     def updateGridValues(self, indexesToSwitch, fillerNum):
         for x, y in indexesToSwitch:
-            print(f"filling with {fillerNum} at row {x} col {y}")
-            self.grid[y - 1][x - 1] = fillerNum
+            self.grid[x][y] = fillerNum
+
             
     def fillSandwichedLine(self, directions, color, xIndex, yIndex):
         print(directions)
@@ -323,11 +310,21 @@ class Board:
         position = self.positionMapForPieces[xIndex, yIndex]
         pygame.draw.circle(self.screen, yellow, position, radius, 1)
         pygame.display.flip()
-        
+    
+    def renderNewScores(self, player1Score, player2Score):
+
+        self.screen.fill(grey, (0, 0, 100, 50))
+        self.player1text = self.playerScoreFont.render(f"Player 1: {player1Score}", False, black)
+        self.player2text = self.playerScoreFont.render(f"Player 2: {player2Score}", False, white)
+
+        self.screen.blit(self.player1text, (0, 0))
+        self.screen.blit(self.player2text, (0, 25))
+        pygame.display.update()
+
     def printGrid(self):
         for i in range(len(self.grid)):
             for j in range(len(self.grid[0])):
-                print(f"{self.grid[j][i]}", end=' ')
+                print(f"{self.grid[i][j]}", end=' ')
             print("")  # Newline after each row
 
     

@@ -40,10 +40,9 @@ class Game:
         
     def update(self, postion):
         x, y = postion
-        self.board.updateGrid(self.curPlayer.playerColor, x, y)
-        self.board.printGrid()
+        self.board.updateGrid(self.curPlayer.playerNumber, x, y)
         self.board.validMoves = self.getValidPlacements()
-        print(self.board.validMoves)
+        self.tallyScore()
     
     def render(self, position):
         x, y = position
@@ -51,7 +50,21 @@ class Game:
         self.board.drawCurBoard()
         self.board.updateCurrentTurnText(self.curPlayer.playerNumber)
         self.board.highlightValidPositions()
-        
+        self.board.renderNewScores(self.player1.score, self.player2.score)
+
+    def tallyScore(self):
+        self.player1.score = 0
+        self.player2.score = 0
+        grid = self.board.grid
+
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                # P1 of black
+                if (grid[i][j] == 1):
+                    self.player1.score += 10
+                elif (grid[i][j] == 2):
+                    self.player2.score += 10
+
     def getValidPlacements(self):
         
         # player nums and current state of the board | validIndexes is a list of tuples for valid move indexes
