@@ -10,7 +10,6 @@ class Game:
 
     def __init__(self):
         self.board = Board(435, 490, grey)
-        self.directionsFilledWithPlacement = []
         self.player1 = Player(1, "black")
         self.player2 = Player(2, "white")
         self.curPlayer = self.player1
@@ -33,22 +32,26 @@ class Game:
         piecePlaced = self.board.placePieceUsingPosition(x, y, self.curPlayer.playerNumber)
 
         if piecePlaced:
+            
             positionPlace = self.board.getIndeciesWithPosition(x, y)
-            
-            self.board.clearPreviousValidMoves(positionPlace)
-            self.directionsFilledWithPlacement.clear()  
-            
-            # Get valid placements for the current turn
-            self.board.validMoves = self.getValidPlacements()
-            
-            # Fill the sandwiched line with the valid directions obtained during placement
-            self.board.fillSandwichedLine(self.directionsFilledWithPlacement, self.curPlayer.playerColor, x, y)  
-            
-            # Update the visuals on board 
-            self.board.updateCurrentTurnText(self.curPlayer.playerNumber)
-            self.board.highlightValidPositions()
-            print(self.directionsFilledWithPlacement)
-                
+            self.update(positionPlace)
+            self.render(positionPlace)
+    
+        
+    def update(self, postion):
+        x, y = postion
+        self.board.updateGrid(self.curPlayer.playerColor, x, y)
+        self.board.printGrid()
+        self.board.validMoves = self.getValidPlacements()
+        print(self.board.validMoves)
+    
+    def render(self, position):
+        x, y = position
+        self.board.clearBoardVisuals()
+        self.board.drawCurBoard()
+        self.board.updateCurrentTurnText(self.curPlayer.playerNumber)
+        self.board.highlightValidPositions()
+        
     def getValidPlacements(self):
         
         # player nums and current state of the board | validIndexes is a list of tuples for valid move indexes
@@ -132,7 +135,6 @@ class Game:
                 return False
             if grid[newX][newY] == closingColor:
                 # A closing color was found // sandwich confirmed in this direction
-                self.directionsFilledWithPlacement.append((-dx, -dy))  # Add the opposite direction
                 return True
             
             # Move further in the current direction

@@ -87,6 +87,21 @@ class Board:
             horizontalLinePos.y += 55
             verticalLinePos.x += 55
 
+    def drawCurBoard(self):
+        
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[0])):
+                
+                position = self.positionMapForPieces[i + 1, j + 1]
+                
+                if (self.grid[i][j] == 1):
+                    pygame.draw.circle(self.screen, black, position, radius)
+                    pygame.display.flip()
+                elif (self.grid[i][j] == 2):
+                    pygame.draw.circle(self.screen, white, position, radius)
+                    pygame.display.flip()
+                    
+                    
     def drawStartingPieces(self):
         self.drawPiece(4, 4, 1)
         self.drawPiece(4, 5, 2)
@@ -106,35 +121,30 @@ class Board:
                 row.append(0)
             self.grid.append(row)
 
-    def drawPiece(self, xIndex, yIndex, colorNumber):
-        # Error checking
-        if (xIndex < 1 or xIndex > 8 or yIndex < 1 or yIndex > 8):
+    def drawPiece(self, row, col, colorNumber):
+        # Ensure the indices are in bounds and convert row/col to screen coordinates
+        if row < 1 or row > 8 or col < 1 or col > 8:
             print("You idiot these are out of bounds!!!")
-        
-        # add the circle
-        if (self.grid[xIndex - 1][yIndex - 1] != 0):
             return
-        
-        # add either 0 "for white" or 1 "for black"
-        position = self.positionMapForPieces[xIndex, yIndex]
 
-        if (colorNumber == 2):
-            self.grid[xIndex - 1][yIndex - 1] = 2
-            pygame.draw.circle(self.screen, white, position, radius)
-            pygame.display.flip()
-        elif (colorNumber == 1):
-            self.grid[xIndex - 1][yIndex - 1] = 1
-            pygame.draw.circle(self.screen, black, position, radius)
-            pygame.display.flip()
-        else:
-            print("Not a valid color dummy!!")
+        if self.grid[row - 1][col - 1] != 0:  # Check using row and col
+            return
 
-    def clearPreviousValidMoves(self, positionPlace):
+        # Map to screen position using col as x and row as y
+        position = self.positionMapForPieces[col, row]
+        self.grid[row - 1][col - 1] = colorNumber  # Assign in grid using row/col
+
+        # Draw the circle based on color
+        color = black if colorNumber == 1 else white
+        pygame.draw.circle(self.screen, color, position, radius)
+        pygame.display.flip()
+
+
+    def clearBoardVisuals(self):
         
-        for i in range(len(self.validMoves)):
-            if self.validMoves[i] != positionPlace:
-                x, y = self.validMoves[i]
-                position = self.positionMapForPieces[x, y]
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[0])):
+                position = self.positionMapForPieces[i + 1, j + 1]
                 pygame.draw.circle(self.screen, grey, position, radius)
                 pygame.display.flip()
     
@@ -217,12 +227,73 @@ class Board:
         
         return indexPosition
     
+    def updateGrid(self, color, xIndex, yIndex):
+        # Define piece identifiers
+        white = 2
+        black = 1
+
+        print("Trying to fill sandwiched lines")
+        print(f"Starting at row / col: ({yIndex}, {xIndex}) with color: {color}")
+
+        # Determine the color values based on the input
+        if color == "black":
+            numToFill = white   # The opposite color to fill
+            fillingWith = black  # The color we're placing
+        else:
+            numToFill = black
+            fillingWith = white
+
+        # Define the direction vectors for row, col movements
+        directions = [(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
+        
+        # Loop through each direction to check for sandwiches
+        for dy, dx in directions:
+            newRow = yIndex + dy  # Starting row index
+            newCol = xIndex + dx  # Starting column index
+            indexesToSwitch = []
+            
+            print(f"Checking row / col: ({newRow}, {newCol}) in direction ({dy}, {dx})")
+
+            # Continue checking until we hit a boundary
+            while 0 <= newRow < len(self.grid) and 0 <= newCol < len(self.grid[0]):
+                if self.grid[newRow - 1][newCol - 1] == numToFill:
+                    indexesToSwitch.append((newRow, newCol))  # Store position of fillers
+                    print(f"Hit {numToFill} piece at ({newRow}, {newCol})")
+                elif self.grid[newRow - 1][newCol - 1] == fillingWith:
+                    # Confirm a valid sandwich only if we found fillers
+                    print(f"Hit {fillingWith}")
+                    if indexesToSwitch:
+                        print(f"Found line to switch in direction ({dy}, {dx}): {indexesToSwitch}")
+                        self.updateGridValues(indexesToSwitch, fillingWith)  # Update the grid
+                    else:
+                        print(f"Found {fillingWith} without any fillers; not a valid sandwich.")
+                    break  # Exit after finding a sandwich or stopping condition
+                else:
+                    # Hit an empty cell or a different color
+                    print(f"Stopping search in direction at ({newRow}, {newCol}) - not a valid sandwich. Hit Empty Square")
+                    break
+
+                # Move to the next position in the current direction
+                newRow += dy
+                newCol += dx
+
+            # Debug: Print indexes to switch after each direction check
+            print(f"Indexes to switch in direction ({dy}, {dx}): {indexesToSwitch}")
+
+
+
+
+                
+    def updateGridValues(self, indexesToSwitch, fillerNum):
+        for x, y in indexesToSwitch:
+            print(f"filling with {fillerNum} at row {x} col {y}")
+            self.grid[y - 1][x - 1] = fillerNum
+            
     def fillSandwichedLine(self, directions, color, xIndex, yIndex):
+        print(directions)
         white = 2
         black = 1
         
-        print("trying to fill sandwiched lines")
-        print()
         if (color == "black"):
             numToFill = white
             fillingWith = black
@@ -236,7 +307,7 @@ class Board:
             
             while (0 <= newX < len(self.grid) and 0 <= newY < len(self.grid[0]) and self.grid[newX][newY] == numToFill):
                 print("filling Piece")
-                self.grid[newX][newY] = fillingWith
+                self.grid[newY][newX] = fillingWith
                 self.drawPiece(xIndex, yIndex, fillingWith)
                 newX -= dx
                 newY -= dy
@@ -254,11 +325,11 @@ class Board:
         pygame.display.flip()
         
     def printGrid(self):
-
         for i in range(len(self.grid)):
             for j in range(len(self.grid[0])):
-                print(self.grid[i][j], end='')
-            print("")
+                print(f"{self.grid[j][i]}", end=' ')
+            print("")  # Newline after each row
+
     
 
 
