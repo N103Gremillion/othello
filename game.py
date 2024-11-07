@@ -1,5 +1,6 @@
 import pygame;
 from board import Board;
+from menu import Menu;
 from player import Player;
 
 grey = (128, 128, 128)
@@ -9,7 +10,9 @@ white = (255, 255, 255)
 class Game:
 
     def __init__(self):
+        self.curScreen = "menu"
         self.board = Board(435, 490, grey)
+        self.menu = Menu(435, 490)
         self.player1 = Player(1, "black")
         self.player2 = Player(2, "white")
         self.curPlayer = self.player1
@@ -20,12 +23,39 @@ class Game:
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP:
-                    self.handleClick()
+                    self.handleBoardClick()
+                    self.handleMenuClick()
+                if event.type == pygame.KEYDOWN:
+                    self.handleKeyPress(event.key)
                 if event.type == pygame.QUIT:
-                    running = False
+                    running = False  
+
             pygame.display.flip()
+
+    def openMenu(self):
+        self.curScreen = "menu"
+
+    def closeMenu(self):    
+        self.curScreen = "board"
+
+    def handleMenuClick(self):
+        if (self.curScreen == "board"):
+            return
     
-    def handleClick(self):
+    def handleKeyPress(self, key):
+        if (key == pygame.K_ESCAPE):
+            if (self.curScreen == "menu"):
+                self.closeMenu()
+                self.board.drawBoard(grey)
+                self.board.drawCurBoard()
+                self.board.highlightValidPositions()
+            elif (self.curScreen == "board"):
+                self.openMenu()
+                self.menu.drawMenu()
+
+    def handleBoardClick(self):
+        if (self.curScreen == "menu"):
+            return
         
         pos = pygame.mouse.get_pos()
         x, y = pos
@@ -34,17 +64,16 @@ class Game:
         if piecePlaced:
             
             positionPlace = self.board.getIndeciesWithPosition(x, y)
-            self.update(positionPlace)
-            self.render(positionPlace)
-    
-        
-    def update(self, postion):
+            self.updateBoard(positionPlace)
+            self.renderBoard(positionPlace)
+           
+    def updateBoard(self, postion):
         x, y = postion
         self.board.updateGrid(self.curPlayer.playerNumber, x, y)
         self.board.validMoves = self.getValidPlacements()
         self.tallyScore()
     
-    def render(self, position):
+    def renderBoard(self, position):
         x, y = position
         self.board.clearBoardVisuals()
         self.board.drawCurBoard()
