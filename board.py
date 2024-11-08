@@ -1,5 +1,6 @@
 import math
-import pygame;
+import pygame
+import copy
 
 """
 Note: for this class a 2 on the grid is white(p2) & 1 is black(p1) and a 0 is (empty)
@@ -20,15 +21,12 @@ class Board:
     # maps indexes to rect positions the value is (topLeft(x, y), bottomRight(x, y)) uses tuple of tuples as value ((x, y), (x, y))
     positionMapForHighlighting = {}
 
-    def __init__(self, boardWidth, boardHeight, color):
-
-        pygame.display.set_mode ([boardWidth, boardHeight])
+    def __init__(self, boardWidth, boardHeight):
 
         # setup of game display and grid
         self.setupMaps()
         self.boardWidth = boardWidth
         self.boardHeight = boardHeight
-        self.screen = pygame.display.get_surface()
         # this is a 2d array
         self.grid = []
         # start board with intial valid positions for black
@@ -38,11 +36,14 @@ class Board:
         self.player1text = self.playerScoreFont.render("Player 1: 0", False, black)
         self.player2text = self.playerScoreFont.render("Player 2: 0", False, white)
         self.currentTurnText = self.currentTurnFont.render("Player 1's Turn", False, black)
-        self.drawBoard(color)
         self.initalizeGrid()
+
+    def draw(self):
+        pygame.display.set_mode ([self.boardWidth, self.boardHeight])
+        self.screen = pygame.display.get_surface()
+        self.drawBoard(grey)
         self.drawStartingPieces()
         self.highlightStartingValidMoves()
-
         pygame.display.flip()
 
     def drawBoard(self, color):
@@ -87,6 +88,37 @@ class Board:
             horizontalLinePos.y += 55
             verticalLinePos.x += 55
 
+    # this clone the current board and returns a new instance
+    def clone(self):
+
+        clone = Board(self.boardWidth, self.boardHeight)
+        clone.grid = []
+        clone.validMoves = []
+
+        for i in range(len(self.grid)):
+            curRow = []
+            for j in range(len(self.grid[0])):
+                curRow.append(self.grid[i][j])
+            clone.grid.append(curRow)
+
+        for i in range(len(self.validMoves)):
+            curMove = []
+            curMove.append(self.validMoves[i][0])
+            curMove.append(self.validMoves[i][1])
+            clone.validMoves.append(curMove)
+
+        clone.positionMapForPieces = copy.deepcopy(self.positionMapForPieces)
+        clone.positionMapForHighlighting = copy.deepcopy(self.positionMapForHighlighting)
+
+        clone.playerScoreFont = self.playerScoreFont
+        clone.currentTurnFont = self.currentTurnFont
+
+        clone.player1text = self.player1text
+        clone.player2text = self.player2text
+        clone.currentTurnText = self.currentTurnText
+
+        return clone
+    
     def drawCurBoard(self):
         
         for i in range(len(self.grid)):
@@ -239,6 +271,11 @@ class Board:
         else:
             colorFilling = black
 
+        print("********Before for **********")
+        print(f"{gridX} {gridY}")
+        self.printGrid()
+        print("******************")
+
         # Test one of the directions
         directions = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
 
@@ -270,6 +307,9 @@ class Board:
                 newY += dy
                 newGridX += dx
                 newGridY += dy
+        print("********After**********")
+        self.printGrid()
+        print("******************")
 
     def updateGridValues(self, indexesToSwitch, fillerNum):
         for x, y in indexesToSwitch:
@@ -324,7 +364,7 @@ class Board:
     def printGrid(self):
         for i in range(len(self.grid)):
             for j in range(len(self.grid[0])):
-                print(f"{self.grid[i][j]}", end=' ')
+                print(f"{self.grid[j][i]}", end=' ')
             print("")  # Newline after each row
 
     
