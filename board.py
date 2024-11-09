@@ -156,18 +156,17 @@ class Board:
             print("You idiot these are out of bounds!!!")
             return
 
-        if self.grid[row - 1][col - 1] != 0:  # Check using row and col
+        if self.grid[row - 1][col - 1] != 0: 
             return
 
         # Map to screen position using col as x and row as y
         position = self.positionMapForPieces[col, row]
-        self.grid[row - 1][col - 1] = colorNumber  # Assign in grid using row/col
+        self.grid[row - 1][col - 1] = colorNumber 
 
         # Draw the circle based on color
         color = black if colorNumber == 1 else white
         pygame.draw.circle(self.screen, color, position, radius)
         pygame.display.flip()
-
 
     def clearBoardVisuals(self):
         
@@ -256,6 +255,13 @@ class Board:
         
         return indexPosition
     
+    def placeValueInGrid(self, colorNum, xIndex, yIndex):
+        gridX = xIndex - 1
+        gridY = yIndex - 1
+
+        self.grid[gridX][gridY] = colorNum
+        
+    # fills in the appropriate sandwiches on the grid given the position of the previously placed piece
     def updateGrid(self, colorNum, xIndex, yIndex):
         # Define piece identifiers
         white = 2
@@ -267,11 +273,6 @@ class Board:
             colorFilling = white
         else:
             colorFilling = black
-
-        print("********Before for **********")
-        print(f"{gridX} {gridY}")
-        self.printGrid()
-        print("******************")
 
         # Test one of the directions
         directions = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
@@ -304,9 +305,6 @@ class Board:
                 newY += dy
                 newGridX += dx
                 newGridY += dy
-        print("********After**********")
-        self.printGrid()
-        print("******************")
 
     def updateGridValues(self, indexesToSwitch, fillerNum):
         for x, y in indexesToSwitch:
@@ -362,7 +360,7 @@ class Board:
         for i in range(len(self.grid)):
             for j in range(len(self.grid[0])):
                 print(f"{self.grid[j][i]}", end=' ')
-            print("")  # Newline after each row
+            print("")  
 
     
 

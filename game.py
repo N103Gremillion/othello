@@ -6,9 +6,10 @@ from player import Player;
 grey = (128, 128, 128)
 black = (0, 0, 0)
 white = (255, 255, 255)
-searchDepth = 2
 
 class Game:
+
+    searchDepth = 2
 
     def __init__(self):
         # by default it is pvp
@@ -35,12 +36,6 @@ class Game:
                 if event.type == pygame.QUIT:
                     running = False
 
-            # checking if in a mode where an ai is playing
-            if (self.gameMode == "aiVsAi"):
-                self.handleAiMove()
-            elif (self.gameMode == "pVsAi" and self.curPlayer == self.player2):
-                self.handleAiMove()
-                break
         pygame.quit()
 
     def handleAiMove(self):
@@ -53,21 +48,29 @@ class Game:
         # for the black player we want to find the maxValue and for the white player we want to find the minValue
         isMaximizing = (self.curPlayer == self.player1)
 
-        bestMove = self.miniMax(boardClone, searchDepth - 1, isMaximizing)
-        print(bestMove)
+        bestMove = self.miniMax(boardClone, self.searchDepth - 1, isMaximizing)
+        self.board.placeValueInGrid(self.curPlayer.playerNumber, bestMove[0], bestMove[1])
+        self.updateBoard(bestMove)
+        self.renderBoard(bestMove)
 
     # iterate over all the branches (possible moves) and get the bestMove 
     def miniMax(self, board, depth, isMaximizing):
         bestMove = None
-        bestMoveValue = -10000 if (isMaximizing) else 10000
+        bestMoveValue = -10000 if isMaximizing else 10000
 
         for move in board.validMoves:
-            moveValue = self.recursiveMiniMax(board, depth - 1, not isMaximizing)
+            boardClone = board.clone()
+            boardClone.printGrid()
+            boardClone.placeValueInGrid(self.curPlayer.playerNumber, move[0], move[1])
+            boardClone.updateGrid(self.curPlayer.playerNumber, move[0], move[1])
+            boardClone.printGrid()
+            
+            moveValue = self.recursiveMiniMax(boardClone, depth - 1, not isMaximizing)
 
-            if (isMaximizing and moveValue > bestMoveValue):
+            if isMaximizing and moveValue > bestMoveValue:
                 bestMoveValue = moveValue
                 bestMove = move
-            elif (not isMaximizing and moveValue < bestMoveValue):
+            elif not isMaximizing and moveValue < bestMoveValue:
                 bestMoveValue = moveValue
                 bestMove = move
 
@@ -75,14 +78,32 @@ class Game:
 
     # recursively explores a move to the depth at the top of the class
     def recursiveMiniMax(self, board, depth, isMaximizing):
-
-        # if you have hit end depth or if you have run out of validMoves
         if depth == 0 or not self.getValidPlacementsForClone(board):
-            return self.evaluateGrid(board.grid)
-        
-        
-        print("recursive call")
+            score = self.evaluateGrid(board.grid)
+            return score
 
+        if isMaximizing:
+            bestScore = -10000
+        else:
+            bestScore = 10000
+
+        for move in self.getValidPlacementsForClone(board):
+            newBoard = board.clone()
+            newBoard.placeOnGrid(move[0], move[1], self.curPlayer.playerNumber)
+
+            self.togglePlayer()
+            score = self.recursiveMiniMax(newBoard, depth - 1, not isMaximizing)
+            self.togglePlayer()
+
+            if isMaximizing:
+                bestScore = max(bestScore, score)
+                
+            else:
+                bestScore = min(bestScore, score)
+                
+        return bestScore
+
+    
     # this returns a value that essentialy is the overall score of the game negative for p2 and positive for p1
     def evaluateGrid(self, grid):
         score = 0
@@ -90,10 +111,31 @@ class Game:
         for row in grid:
             for val in row:
                 if (val == self.player1.playerNumber):
-                    score += 1
+                    score += 10
                 elif (val == self.player2.playerNumber):
-                    score -= 1
+                    score -= 10
         return score
+
+    def determinePlayer(self):
+        print("Determining the player")
+        # Toggle player and check valid moves for the new player
+        self.togglePlayer()
+        validMovesForCurrentPlayer = self.getValidPlacements()
+        print(validMovesForCurrentPlayer)
+        if not validMovesForCurrentPlayer:
+            # If the current player has no moves, toggle to the other player
+            self.togglePlayer()
+            validMovesForOtherPlayer = self.getValidPlacements()
+            print(validMovesForOtherPlayer)
+            # If neither player has valid moves, end the game
+            if not validMovesForOtherPlayer:
+                self.endGame()
+
+
+        
+    def togglePlayer(self):
+         # Toggle the player
+        self.curPlayer = self.player1 if self.curPlayer == self.player2 else self.player2
 
     def openMenu(self):
         self.curScreen = "menu"
@@ -136,9 +178,15 @@ class Game:
                 
             elif (self.curScreen == "board"):
                 self.openMenu()
+        elif (key == pygame.K_a or key == pygame.K_i):
+        # checking if in a mode where an ai is playing
+            if (self.gameMode == "aiVsAi"):
+                self.handleAiMove()
+            elif (self.gameMode == "pVsAi"):
+                self.handleAiMove()
 
     def handleBoardClick(self):
-        if (self.curScreen == "menu"):
+        if (self.curScreen == "menu" or self.gameMode == "aiVsAi" or (self.gameMode == "pVsAi" and self.curPlayer == self.player2)):
             return
                 
         pos = pygame.mouse.get_pos()
@@ -150,15 +198,21 @@ class Game:
             positionPlace = self.board.getIndeciesWithPosition(x, y)
             self.updateBoard(positionPlace)
             self.renderBoard(positionPlace)
-            # Switch to the other player after AI move
-            self.curPlayer = self.player1 if self.curPlayer == self.player2 else self.player2
-            self.board.updateCurrentTurnText(self.curPlayer.playerNumber)
+
+    def endGame(self):
+        print("ending the game")
+        print(f"player1 has a score of {self.player1.score}")
+        print(f"player2 has a score of {self.player2.score}")
+        # pygame.quit()
+        # exit()
 
     def updateBoard(self, postion):
         x, y = postion
         self.board.updateGrid(self.curPlayer.playerNumber, x, y)
+        self.determinePlayer()
         self.board.validMoves = self.getValidPlacements()
         self.tallyScore()
+        self.board.updateCurrentTurnText(self.curPlayer.playerNumber)
     
     def renderBoard(self, position):
         x, y = position
@@ -182,8 +236,6 @@ class Game:
                     self.player2.score += 10
 
     def getValidPlacementsForClone(self, board):
-        p1 = 1
-        p2 = 2
         grid = board.grid
         curPlayer = self.curPlayer
         validIndexes = []
@@ -192,6 +244,7 @@ class Game:
         if curPlayer.playerNumber == 1:
             curPlayer = self.player2
         else:
+            print("you are white")
             curPlayer = self.player1
         
         # search for the valid positions for curPlayer
@@ -204,29 +257,23 @@ class Game:
         return validIndexes
 
     def getValidPlacements(self):
-        
-        # player nums and current state of the board | validIndexes is a list of tuples for valid move indexes
-        self.directionsFilledWithPlacement = []
-        
-        p1 = 1
-        p2 = 2
+        # Initial state of the board and current player
         grid = self.board.grid
         curPlayer = self.curPlayer
         validIndexes = []
-        
-        # get previous players turn and to try and search for oposing player positions | reminder: p1 = black = 1 on grid / p2 = white = 2 on grid
-        if curPlayer.playerNumber == 1:
-            curPlayer = self.player2
-        else:
-            curPlayer = self.player1
-        
-        # search for the valid positions for curPlayer
+
+        # Start searching for valid placements
+        print("Searching for valid placements for", "White" if curPlayer.playerNumber == 2 else "Black")
         for row in range(len(grid)):
             for col in range(len(grid[0])):
                 curNum = grid[row][col]
-                if (curNum == 0 and self.isIndexPlacable(row, col, grid, curPlayer.playerNumber)):
+                if curNum == 0 and self.isIndexPlacable(row, col, grid, curPlayer.playerNumber):
+                    print(f"Valid move found at ({row + 1}, {col + 1})")
                     validIndexes.append((row + 1, col + 1))
 
+        # Display found valid indexes
+        print("Valid placements:", validIndexes)
+        self.board.printGrid()
         return validIndexes
 
     def isIndexPlacable(self, x, y, grid, colorChecking):
@@ -235,26 +282,30 @@ class Game:
         white = 2
         
         if grid[x][y] != empty:
+            print(f"Index ({x}, {y}) is not empty.")
             return False
-        
-        # Set opponent's color
-        opponentColor = black if colorChecking == white else white
 
-        # Directions to check around the placement
+        opponentColor = black if colorChecking == white else white
         directions = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
         isPlaceable = False
 
+        # Check each direction for opponent and potential sandwich
         for dx, dy in directions:
             newX, newY = x + dx, y + dy
-            
-            # Check bounds
             if 0 <= newX < 8 and 0 <= newY < 8:
                 if grid[newX][newY] == opponentColor:
+                    print(f"Opponent color at ({newX}, {newY}) in direction ({dx}, {dy})")
                     if self.checkForSandwich(grid, opponentColor, (dx, dy), newX, newY):
-                        # Only set isPlaceable to True after confirming the sandwich
+                        print(f"Sandwich confirmed in direction ({dx}, {dy}) starting at ({x}, {y})")
                         isPlaceable = True
 
+        if isPlaceable:
+            print(f"Placement at ({x}, {y}) is valid for color {colorChecking}")
+        else:
+            print(f"No valid sandwich found for placement at ({x}, {y})")
+
         return isPlaceable
+
 
     def checkForSandwich(self, grid, colorBeingSandwiched, direction, x, y):
         empty = 0
@@ -281,5 +332,3 @@ class Game:
         
         return False
                 
-        
-        
