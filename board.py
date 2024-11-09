@@ -107,9 +107,6 @@ class Board:
             curMove.append(self.validMoves[i][1])
             clone.validMoves.append(curMove)
 
-        clone.positionMapForPieces = copy.deepcopy(self.positionMapForPieces)
-        clone.positionMapForHighlighting = copy.deepcopy(self.positionMapForHighlighting)
-
         clone.playerScoreFont = self.playerScoreFont
         clone.currentTurnFont = self.currentTurnFont
 

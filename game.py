@@ -38,23 +38,48 @@ class Game:
             # checking if in a mode where an ai is playing
             if (self.gameMode == "aiVsAi"):
                 self.handleAiMove()
-            elif (self.gameMode == "pVsAi"):
+            elif (self.gameMode == "pVsAi" and self.curPlayer == self.player2):
                 self.handleAiMove()
+                break
         pygame.quit()
 
     def handleAiMove(self):
         if self.gameMode == "aiVsAi" or (self.gameMode == "pVsAi" and self.curPlayer == self.player1):
             return
-
         
+        # clone the previous state of the board
+        boardClone = self.board.clone()
 
-    def miniMax(self, board, depth, maximizingNode):
-        print("miniMax")
+        # for the black player we want to find the maxValue and for the white player we want to find the minValue
+        isMaximizing = (self.curPlayer == self.player1)
+
+        bestMove = self.miniMax(boardClone, searchDepth - 1, isMaximizing)
+        print(bestMove)
+
+    # iterate over all the branches (possible moves) and get the bestMove 
+    def miniMax(self, board, depth, isMaximizing):
+        bestMove = None
+        bestMoveValue = -10000 if (isMaximizing) else 10000
+
+        for move in board.validMoves:
+            moveValue = self.recursiveMiniMax(board, depth - 1, not isMaximizing)
+
+            if (isMaximizing and moveValue > bestMoveValue):
+                bestMoveValue = moveValue
+                bestMove = move
+            elif (not isMaximizing and moveValue < bestMoveValue):
+                bestMoveValue = moveValue
+                bestMove = move
+
+        return bestMove
 
     # recursively explores a move to the depth at the top of the class
-    def recursiveMiniMax(self, board, depth, maximizingNode):
+    def recursiveMiniMax(self, board, depth, isMaximizing):
+
+        # if you have hit end depth or if you have run out of validMoves
         if depth == 0 or not self.getValidPlacementsForClone(board):
             return self.evaluateGrid(board.grid)
+        
         
         print("recursive call")
 
@@ -69,16 +94,6 @@ class Game:
                 elif (val == self.player2.playerNumber):
                     score -= 1
         return score
-    
-    # this clones the array that stores the state of the board
-    def cloneGrid(self):
-        newBoard = []
-        for i in range(len(self.board.grid)):
-            curRow = []
-            for j in range(len(self.board.grid[0])):
-                curRow.append(self.board.grid[i][j])
-            newBoard.append(curRow)
-        return newBoard
 
     def openMenu(self):
         self.curScreen = "menu"
