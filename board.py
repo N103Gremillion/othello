@@ -12,6 +12,7 @@ white = (255, 255, 255)
 blue = (0, 0, 139)
 yellow = (255, 255, 0)
 grey = (128, 128, 128)
+purple = (111, 0, 255)
 radius = 25
 
 class Board: 
@@ -36,6 +37,8 @@ class Board:
         self.player1text = self.playerScoreFont.render("Player 1: 0", False, black)
         self.player2text = self.playerScoreFont.render("Player 2: 0", False, white)
         self.currentTurnText = self.currentTurnFont.render("Player 1's Turn", False, black)
+        self.debugText = self.playerScoreFont.render("Dbug : OFF", False, purple)
+        self.alphaBetaText = self.playerScoreFont.render("Prune : OFF", False, purple)
         self.initalizeGrid()
 
     def draw(self):
@@ -45,6 +48,16 @@ class Board:
         self.drawStartingPieces()
         self.highlightStartingValidMoves()
         pygame.display.flip()
+
+    def renderDebugAlpha(self, inDebug, AlphaBetaOn):
+
+        self.screen.fill(grey, (350, 0, 100, 50))
+
+        self.debugText = self.playerScoreFont.render(f"Dbug : {"ON" if inDebug else "OFF"}", False, purple)
+        self.alphaBetaText = self.playerScoreFont.render(f"Prune : {"ON" if AlphaBetaOn else "OFF"}", False, purple)
+        self.screen.blit(self.debugText, (310, 0))
+        self.screen.blit(self.alphaBetaText, (310, 25))
+        pygame.display.update()
 
     def drawBoard(self, color):
         
@@ -65,10 +78,14 @@ class Board:
         pygame.draw.rect(self.screen, blue, dividerLine)
         pygame.display.update()
 
-        # draw player scores
+        # draw player scores / cur player
         self.screen.blit(self.player1text, (0, 0))
         self.screen.blit(self.player2text, (0, 25))
-        self.screen.blit(self.currentTurnText, (160, 10))
+        self.screen.blit(self.currentTurnText, (150, 20))
+
+        # draw debug and alpha/beta
+        self.screen.blit(self.debugText, (310, 0))
+        self.screen.blit(self.alphaBetaText, (310, 25))
 
         # loop over and draw the initial vertical and horizontal lines on the board
         for i in range(7):
@@ -195,14 +212,14 @@ class Board:
         
     def updateCurrentTurnText(self, playerNumber):
 
-        self.screen.fill(grey, (160, 10, 300, 40))
+        self.screen.fill(grey, (100, 0, 200, 50))
         
         if playerNumber == 1:
             self.currentTurnText = self.currentTurnFont.render(f"Player 1's Turn", True, black)
         elif playerNumber == 2:
             self.currentTurnText = self.currentTurnFont.render(f"Player 2's Turn", True, white)
             
-        self.screen.blit(self.currentTurnText, (160, 10))
+        self.screen.blit(self.currentTurnText, (150, 20))
         pygame.display.update()
 
     def setupMaps(self):

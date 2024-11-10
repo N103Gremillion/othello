@@ -1,4 +1,4 @@
-
+# hold basic info about players
 class Player: 
 
     def __init__(self, playerNumber, playerColor):

@@ -9,10 +9,12 @@ white = (255, 255, 255)
 
 class Game:
 
-    searchDepth = 5
+    searchDepth = 3
 
     def __init__(self):
         # by default it is pvp
+        self.stateCounter = 0
+        self.debug = False
         self.alphaBeta = False
         self.gameMode = "pVp"
         self.curScreen = "board"
@@ -38,99 +40,150 @@ class Game:
 
         pygame.quit()
 
+    # clone the current state of board and run minimax on each branch
     def handleAiMove(self):
-        print("Starting AI move handling.")
-        if self.gameMode == "aiVsAi" or (self.gameMode == "pVsAi" and self.curPlayer == self.player1) or self.gameMode == "Over":
-            print("AI move handling skipped due to game mode or current player.")
+        if (self.gameMode == "pVsAi" and self.curPlayer == self.player1) or self.gameMode == "Over":
             return
-
-        print("Cloning the board for AI calculations.")
         boardClone = self.board.clone()
-
         isMaximizing = (self.curPlayer == self.player1)
-        print(f"Current player: {'Player 1 (Maximizing)' if isMaximizing else 'Player 2 (Minimizing)'}")
-
         bestMove = self.miniMax(boardClone, self.searchDepth - 1, isMaximizing)
-        print(f"Best move found by AI: {bestMove}")
-
         self.board.placeValueInGrid(self.curPlayer.playerNumber, bestMove[0], bestMove[1])
         self.updateBoard(bestMove)
         self.renderBoard(bestMove)
-        print("AI move completed and board updated.")
 
+    # interate over branches and call the recursive mininmax
     def miniMax(self, board, depth, isMaximizing):
-        print(f"Starting miniMax at depth {depth} for {'maximizing' if isMaximizing else 'minimizing'} player.")
+
         bestMove = None
-        bestMoveValue = -10000 if isMaximizing else 10000
+        alpha = -10000
+        beta = 10000
+        self.stateCounter = 0
 
         for move in board.validMoves:
-            print(f"Evaluating move {move}")
+
+            if self.debug:
+                print(f"Evaluating move {move}")
+
             boardClone = board.clone()
+            # place move on clone and change colors of appropriate pieces
             boardClone.placeValueInGrid(self.curPlayer.playerNumber, move[0], move[1])
             boardClone.updateGrid(self.curPlayer.playerNumber, move[0], move[1])
 
-            moveValue = self.recursiveMiniMax(boardClone, depth - 1, not isMaximizing)
-            print(f"Move {move} has value {moveValue}")
+            # get value of the current board state 
+            moveValue = self.recursiveMiniMax(boardClone, depth - 1, not isMaximizing, alpha, beta, move)
+            
+            if self.debug:
+                print(f"Move {move} has a heuristic value {moveValue}")
 
-            if isMaximizing and moveValue > bestMoveValue:
-                bestMoveValue = moveValue
+            if isMaximizing and moveValue > alpha:
+                alpha = moveValue
                 bestMove = move
-                print(f"New best move for maximizing player: {bestMove} with value {bestMoveValue}")
-            elif not isMaximizing and moveValue < bestMoveValue:
-                bestMoveValue = moveValue
+            elif not isMaximizing and moveValue < beta:
+                beta = moveValue
                 bestMove = move
-                print(f"New best move for minimizing player: {bestMove} with value {bestMoveValue}")
 
-        print(f"Best move returned by miniMax: {bestMove} with value {bestMoveValue}")
+        print(f"Total game states evaluated: {self.stateCounter}")
         return bestMove
 
-    def recursiveMiniMax(self, board, depth, isMaximizing):
+    def recursiveMiniMax(self, board, depth, isMaximizing, alpha, beta, move):
+
+        self.stateCounter += 1
+
         if depth == 0 or not self.getValidPlacementsForClone(board):
             score = self.evaluateGrid(board.grid)
-            print(f"Leaf node or max depth reached. Returning score {score}")
+            if self.debug:
+                print(f"Depth {depth} | Move sequence: {move} | Heuristic value: {score}")
             return score
 
-        # Initialize best score based on maximizing/minimizing player
-        if isMaximizing:
-            bestScore = -10000
-        else:
-            bestScore = 10000
-
-        print(f"{'Maximizing' if isMaximizing else 'Minimizing'} at depth {depth} with current best score {bestScore}")
-
-        # Iterate through all valid moves and recursively evaluate
-        for move in self.getValidPlacementsForClone(board):
-            print(f"Evaluating move {move} at depth {depth}")
-
-            if (isMaximizing):
-                playerNum = 1
-            else:
-                playerNum = 2
-
-            # Create a new board and make the move
-            newBoard = board.clone()
-            newBoard.placeValueInGrid(playerNum, move[0], move[1])
-            newBoard.updateGrid(playerNum, move[0], move[1])
-            newBoard.printGrid()
-
-            # Recursively evaluate the move at the next depth
-            score = self.recursiveMiniMax(newBoard, depth - 1, not isMaximizing)
-            print(f"The score for this move is {score}")
-
-            # Update best score based on maximizing/minimizing logic
+        # for alpha beta pruning
+        if self.alphaBeta:
             if isMaximizing:
-                bestScore = max(bestScore, score)
-                print(f"Maximizing: Updated best score to {bestScore} after move {move}")
+                bestScore = -10000
+                for move in self.getValidPlacementsForClone(board):
+                    if self.debug:
+                        print(f"Maximizing | Evaluating move {move}")
+
+                    newBoard = board.clone()
+                    newBoard.placeValueInGrid(1, move[0], move[1])
+                    newBoard.updateGrid(1, move[0], move[1])
+
+                    score = self.recursiveMiniMax(newBoard, depth - 1, False, alpha, beta, move)
+                    bestScore = max(bestScore, score)
+
+                    # check if you  found a better alpha value
+                    alpha = max(alpha, bestScore)
+
+                    if self.debug:
+                        print(f"Maximizing | Move {move} | Best score: {bestScore} | Alpha: {alpha}")
+
+                    # prune when the beta(minimizer value) is already less than or == to the maximizer at the root
+                    if beta <= alpha:
+                        if self.debug:
+                            print(f"Pruning branches where beta ({beta}) <= alpha ({alpha})")
+                        break
+
+                return bestScore
+            
             else:
-                bestScore = min(bestScore, score)
-                print(f"Minimizing: Updated best score to {bestScore} after move {move}")
+                bestScore = 10000
+                for move in self.getValidPlacementsForClone(board):
+                    if self.debug:
+                        print(f"Minimizing | Evaluating move {move}")
 
-        print(f"Returning best score {bestScore} at depth {depth}")
-        return bestScore
+                    newBoard = board.clone()
+                    newBoard.placeValueInGrid(2, move[0], move[1])
+                    newBoard.updateGrid(2, move[0], move[1])
 
+                    score = self.recursiveMiniMax(newBoard, depth - 1, True, alpha, beta, move)
+                    bestScore = min(bestScore, score)
+                    beta = min(beta, bestScore)
 
+                    if self.debug:
+                        print(f"Minimizing | Move {move} | Best score: {bestScore} | Beta: {beta}")
 
-    
+                    if beta <= alpha:
+                        if self.debug:
+                            print(f"Pruning branches where beta ({beta}) <= alpha ({alpha})")
+                        break
+                return bestScore
+        # if not in alpha beta pruning
+        else:
+            bestScore = -10000 if isMaximizing else 10000
+
+            # iterate over the "children" potential moves for this node
+            for move in self.getValidPlacementsForClone(board):
+                if self.debug:
+                    print(f"{'Maximizing' if isMaximizing else 'Minimizing'} | Evaluating move {move}")
+
+                playerNum = 1 if isMaximizing else 2
+
+                newBoard = board.clone()
+                newBoard.placeValueInGrid(playerNum, move[0], move[1])
+                newBoard.updateGrid(playerNum, move[0], move[1])
+
+                # print board if in debugg
+                if self.debug:
+                    print(f"{'Maximizing' if isMaximizing else 'Minimizing'} | Move {move} grid state:")
+                    newBoard.printGrid()
+
+                score = self.recursiveMiniMax(newBoard, depth - 1, not isMaximizing, alpha, beta, move)
+                
+                if self.debug:
+                    print(f"{'Maximizing' if isMaximizing else 'Minimizing'} | Move {move} | Score: {score}")
+
+                if isMaximizing:
+                    bestScore = max(bestScore, score)
+                    if self.debug:
+                        print(f"Maximizing | Move {move} | Updated best score to {bestScore}")
+                else:
+                    bestScore = min(bestScore, score)
+                    if self.debug:
+                        print(f"Minimizing | Move {move} | Updated best score to {bestScore}")
+
+            if self.debug:
+                print(f"Returning best score {bestScore}")
+            return bestScore
+
     # this returns a value that essentialy is the overall score of the game negative for p2 and positive for p1
     def evaluateGrid(self, grid):
         score = 0
@@ -206,6 +259,13 @@ class Game:
                 self.handleAiMove()
             elif (self.gameMode == "pVsAi"):
                 self.handleAiMove()
+        # toggling on and off pruning and debugg
+        elif (key == pygame.K_d):
+            self.debug = not self.debug
+            self.board.renderDebugAlpha(self.debug, self.alphaBeta)
+        elif (key == pygame.K_p):
+            self.alphaBeta = not self.alphaBeta
+            self.board.renderDebugAlpha(self.debug, self.alphaBeta)
 
     def handleBoardClick(self):
         if (self.curScreen == "menu" or self.gameMode == "aiVsAi" or (self.gameMode == "pVsAi" and self.curPlayer == self.player2) or self.gameMode == "over"):
@@ -244,6 +304,7 @@ class Game:
         self.board.updateCurrentTurnText(self.curPlayer.playerNumber)
         self.board.highlightValidPositions()
         self.board.renderNewScores(self.player1.score, self.player2.score)
+        self.board.renderDebugAlpha(self.debug, self.alphaBeta)
 
     def tallyScore(self):
         self.player1.score = 0
