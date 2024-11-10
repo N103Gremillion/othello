@@ -31,8 +31,8 @@ class Board:
         self.grid = []
         # start board with intial valid positions for black
         self.validMoves = [(4, 6), (3, 5), (5, 3), (6, 4)]
-        self.playerScoreFont = pygame.font.SysFont('Comic Sans MS', 30)
-        self.currentTurnFont = pygame.font.SysFont('Comit Sans MS', 45)
+        self.playerScoreFont = pygame.font.SysFont('Comic Sans MS', 20)
+        self.currentTurnFont = pygame.font.SysFont('Comit Sans MS', 30)
         self.player1text = self.playerScoreFont.render("Player 1: 0", False, black)
         self.player2text = self.playerScoreFont.render("Player 2: 0", False, white)
         self.currentTurnText = self.currentTurnFont.render("Player 1's Turn", False, black)
