@@ -30,3 +30,11 @@ when it is the Ai's turn by pressing (a) or (i) on your keyboard the ai will mak
 - The game text should tell you whos turn it is at the top
 - to toggle debug mode press the (d) on keyboard 
 - to toggle alphaBetaPrune mode press the (p) on your keyboard
+
+# Basic Game Display
+![alt text](image.png)
+
+# Menu Display
+![alt text](image-1.png)
+
+
